@@ -25,10 +25,21 @@ jobs:
         run: python -m playwright install chromium --with-deps
 
       - name: Run tests
+        shell: bash
         run: |
-          cd cubeit
-          python - m http.server 8000 & 
-          cd ..
+          set -euo pipefail
+
+          python -m http.server 8000 --bind 127.0.0.1 &
+          SERVER_PID=$!
+
+          for i in {1..20}; do
+            if curl -sSf http://127.0.0.1:8000/ > /dev/null; then
+              break
+            fi
+            sleep 0.5
+          done
+
           pytest test -v
-          
+
+          kill $SERVER_PID || true
           
